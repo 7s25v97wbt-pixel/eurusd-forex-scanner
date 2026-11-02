@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1220">
+<title>EUR/USD Scanner</title>
+<script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1220;color:#e8edf7;font-family:Arial,sans-serif}
+header{padding:20px 16px;border-bottom:1px solid #253047}
+h1{font-size:21px;margin:0 0 6px}
+.muted{color:#8996aa;font-size:12px}
+nav{display:flex;gap:8px;padding:12px;overflow:auto}
+nav button,.action{background:#19243a;color:#dce5f5;border:1px solid #30405c;padding:10px 14px;border-radius:9px}
+nav button.active,.action.primary{background:#2563eb;border-color:#2563eb;color:white}
+main{padding:0 12px 25px;max-width:1000px;margin:auto}
+.panel{background:#121d30;border:1px solid #26344d;border-radius:13px;padding:14px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.price{font-size:27px;font-weight:bold;margin:8px 0}
+#chart{height:330px;width:100%;margin-top:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#19243a;padding:12px;border-radius:10px}
+.stat strong{display:block;font-size:16px;margin-top:7px}
+h2{font-size:15px;margin:0 0 12px}
+.tag{font-size:11px;padding:5px 8px;border-radius:6px;background:#26344d}
+.good{color:#4ade80}.bad{color:#fb7185}.neutral{color:#fbbf24}
+button{cursor:pointer;font-size:13px}
+select{background:#19243a;color:white;border:1px solid #30405c;padding:9px;border-radius:8px}
+#status{font-size:12px;color:#fbbf24;margin-top:10px}
+.signal{padding:10px;background:#19243a;border-radius:9px;margin-top:8px;font-size:13px}
+.hidden{display:none}
+footer{text-align:center;color:#77849a;font-size:11px;padding:20px}
+@media(min-width:700px){#chart{height:430px}.stats{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div>
+      <h1>EUR/USD Scanner</h1>
+      <div class="muted">Market analysis dashboard · Alert only</div>
+    </div>
+    <span class="tag">M15 / H1</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+  <button onclick="showPage('analysis',this)">Analysis</button>
+  <button onclick="showPage('alerts',this)">Alerts</button>
+  <button onclick="showPage('settings',this)">Settings</button>
+</nav>
+
+<main>
+<section id="dashboard">
+  <div class="panel">
+    <div class="row">
+      <div>
+        <div class="muted">EUR/USD</div>
+        <div class="price" id="price">--</div>
+        <div class="muted" id="updated">Waiting for market data</div>
+      </div>
+      <button class="action primary" onclick="loadData()">Load market data</button>
+    </div>
+    <div id="status">Live data not connected yet.</div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <h2>Price chart</h2>
+      <select id="timeframe" onchange="loadData()">
+        <option value="15min">M15</option>
+        <option value="1h">H1</option>
+      </select>
+    </div>
+    <div id="chart"></div>
+    <div class="muted">Candles · Analysis overlays will appear here</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="muted">Market structure</span><strong id="structure">Waiting</strong></div>
+    <div class="stat"><span class="muted">Consolidation</span><strong id="consolidation">Waiting</strong></div>
+    <div class="stat"><span class="muted">Direction estimate</span><strong id="direction">Waiting</strong></div>
+    <div class="stat"><span class="muted">Signal strength</span><strong id="strength">Waiting</strong></div>
+  </div>
+</section>
+
+<section id="analysis" class="hidden">
+  <div class="panel">
+    <h2>Market analysis</h2>
+    <div class="signal">Supply and demand zones: awaiting market data.</div>
+    <div class="signal">Fair Value Gaps: awaiting market data.</div>
+    <div class="signal">Order Blocks: awaiting market data.</div>
+    <div class="signal">H1 market context: awaiting market data.</div>
+  </div>
+</section>
+
+<section id="alerts" class="hidden">
+  <div class="panel">
+    <h2>Scanner alerts</h2>
+    <div id="alertList" class="muted">No alerts yet.</div>
+  </div>
+</section>
+
+<section id="settings" class="hidden">
+  <div class="panel">
+    <h2>Scanner settings</h2>
+    <p class="muted">Instrument: EUR/USD only</p>
+    <p class="muted">Entry timeframe: M15</p>
+    <p class="muted">Context timeframe: H1</p>
+    <p class="muted">Prediction: next 1–3 candles</p>
+    <p class="muted">Trading execution: disabled</p>
+  </div>
+</section>
+</main>
+
+<footer>EUR/USD Scanner · Analysis and alerts only · Not financial advice</footer>
+
+<script>
+let chart, candleSeries, currentData=[];
+
+function showPage(page,button){
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(page).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  button.classList.add('active');
+  if(chart) chart.timeScale().fitContent();
+}
+
+function setupChart(){
+  const el=document.getElementById('chart');
+  chart=LightweightCharts.createChart(el,{
+    width:el.clientWidth,
+    height:330,
+    layout:{background:{color:'#121d30'},textColor:'#aab7cc'},
+    grid:{vertLines:{color:'#202d42'},horzLines:{color:'#202d42'}},
+    rightPriceScale:{borderColor:'#30405c'},
+    timeScale:{borderColor:'#30405c',timeVisible:true},
+    crosshair:{mode:0}
+  });
+  candleSeries=chart.addCandlestickSeries({
+    upColor:'#22c55e',downColor:'#ef4444',
+    borderVisible:false,
+    wickUpColor:'#22c55e',wickDownColor:'#ef4444'
+  });
+  window.addEventListener('resize',()=>{
+    chart.applyOptions({width:el.clientWidth});
+  });
+}
+
+async function loadData(){
+  const status=document.getElementById('status');
+  status.textContent='Loading market data...';
+  try{
+    const interval=document.getElementById('timeframe').value;
+    const response=await fetch(
+      '/.netlify/functions/market-data?symbol=EUR%2FUSD&interval='+interval+'&outputsize=250'
+    );
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||'Market data request failed');
+    if(!data.values||!data.values.length) throw new Error('No candle data received');
+
+    currentData=data.values.slice().reverse().map(c=>({
+      time:Math.floor(new Date(c.datetime.replace(' ','T')+'Z').getTime()/1000),
+      open:Number(c.open),high:Number(c.high),
+      low:Number(c.low),close:Number(c.close)
+    })).filter(c=>Number.isFinite(c.time)&&Number.isFinite(c.close));
+
+    candleSeries.setData(currentData);
+    chart.timeScale().fitContent();
+    const last=currentData[currentData.length-1];
+    document.getElementById('price').textContent=last.close.toFixed(5);
+    document.getElementById('updated').textContent='Latest candle: '+new Date(last.time*1000).toLocaleString();
+    status.textContent='Market data loaded successfully.';
+    status.className='good';
+    analyse();
+  }catch(error){
+    status.textContent='Could not load market data: '+error.message;
+    status.className='bad';
+  }
+}
+
+function analyse(){
+  if(currentData.length<20)return;
+  const recent=currentData.slice(-20);
+  const highs=recent.map(c=>c.high);
+  const lows=recent.map(c=>c.low);
+  const range=Math.max(...highs)-Math.min(...lows);
+  const average=recent.reduce((s,c)=>s+(c.high-c.low),0)/recent.length;
+  const isRange=range<average*5;
+  const last=recent[recent.length-1];
+  const previous=recent[recent.length-2];
+  const up=last.close>previous.close;
+  document.getElementById('structure').textContent=up?'Bullish':'Bearish';
+  document.getElementById('structure').className=up?'good':'bad';
+  document.getElementById('consolidation').textContent=isRange?'Possible range':'No clear range';
+  document.getElementById('direction').textContent=up?'Upward bias':'Downward bias';
+  document.getElementById('strength').textContent='Preliminary';
+  document.getElementById('alertList').textContent=
+    'Basic price analysis updated. Advanced signal validation will be added next.';
+}
+
+setupChart();
+</script>
+</body>
+</html>
