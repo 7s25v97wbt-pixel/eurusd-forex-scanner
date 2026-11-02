@@ -1,236 +1,215 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>EUR/USD Scanner</title>
+<title>EUR/USD Forex Scanner</title>
 <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#0b1220;color:#e8edf7;font-family:Arial,sans-serif}
-header{padding:20px 16px;border-bottom:1px solid #253047}
-h1{font-size:21px;margin:0 0 6px}
-.muted{color:#8996aa;font-size:12px}
-nav{display:flex;gap:8px;padding:12px;overflow:auto}
-nav button,.action{background:#19243a;color:#dce5f5;border:1px solid #30405c;padding:10px 14px;border-radius:9px}
-nav button.active,.action.primary{background:#2563eb;border-color:#2563eb;color:white}
-main{padding:0 12px 25px;max-width:1000px;margin:auto}
-.panel{background:#121d30;border:1px solid #26344d;border-radius:13px;padding:14px;margin-bottom:12px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.price{font-size:27px;font-weight:bold;margin:8px 0}
-#chart{height:330px;width:100%;margin-top:12px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:#19243a;padding:12px;border-radius:10px}
-.stat strong{display:block;font-size:16px;margin-top:7px}
-h2{font-size:15px;margin:0 0 12px}
-.tag{font-size:11px;padding:5px 8px;border-radius:6px;background:#26344d}
-.good{color:#4ade80}.bad{color:#fb7185}.neutral{color:#fbbf24}
-button{cursor:pointer;font-size:13px}
-select{background:#19243a;color:white;border:1px solid #30405c;padding:9px;border-radius:8px}
-#status{font-size:12px;color:#fbbf24;margin-top:10px}
-.signal{padding:10px;background:#19243a;border-radius:9px;margin-top:8px;font-size:13px}
-.hidden{display:none}
-footer{text-align:center;color:#77849a;font-size:11px;padding:20px}
-@media(min-width:700px){#chart{height:430px}.stats{grid-template-columns:repeat(4,1fr)}}
+:root{color-scheme:dark;--bg:#08111f;--panel:#111d2e;--panel2:#17253a;--line:#26374e;--text:#edf4ff;--muted:#91a4bd;--green:#31d49a;--red:#ff6f7d;--blue:#70a7ff;--yellow:#f5c96a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:18px 16px 12px;background:#0d1828;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{font-size:17px;font-weight:800;letter-spacing:.2px}.sub{color:var(--muted);font-size:12px;margin-top:4px}
+.status{font-size:11px;padding:6px 9px;border-radius:20px;background:#273449;color:var(--muted);white-space:nowrap}.status.ok{background:#103b32;color:#75efc4}.status.bad{background:#48232d;color:#ff9ba5}
+nav{display:flex;gap:7px;padding:10px 12px;overflow:auto;background:#0d1828;border-bottom:1px solid var(--line)}
+nav button{flex:1;min-width:80px;border:1px solid var(--line);background:transparent;color:var(--muted);padding:10px 8px;border-radius:10px;font-weight:650}
+nav button.active{background:#1d3554;color:white;border-color:#31577f}
+main{max-width:1000px;margin:auto;padding:14px 12px 90px}.page{display:none}.page.active{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.label{font-size:12px;color:var(--muted)}.big{font-size:25px;font-weight:800;letter-spacing:.2px}.muted{color:var(--muted)}.small{font-size:12px;color:var(--muted)}
+button,select,input{font:inherit}button.primary{background:#3478d4;color:white;border:0;border-radius:10px;padding:12px 15px;font-weight:750}
+button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+button:disabled{opacity:.5}
+select,input{background:#0b1626;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.stat{background:#0c1727;border:1px solid var(--line);border-radius:11px;padding:12px;min-width:0}.stat strong{display:block;font-size:15px;margin-top:7px;overflow-wrap:anywhere}
+#chart{height:370px;width:100%;margin-top:12px}.chart-note{font-size:11px;color:var(--muted);margin-top:8px}
+.pill{font-size:11px;padding:5px 8px;border-radius:20px;background:#26374e;color:#c9d7e9}.pill.green{background:#103b32;color:#75efc4}.pill.red{background:#48232d;color:#ff9ba5}.pill.yellow{background:#46391e;color:#f5d58b}
+.section-title{font-weight:800;margin:0 0 10px}.item{padding:11px 0;border-top:1px solid var(--line)}.item:first-of-type{border-top:0}.item-title{font-weight:700}.item-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.field{display:flex;flex-direction:column;gap:7px;margin:12px 0}.field input{width:100%}.notice{background:#332c1c;border:1px solid #66542a;color:#f3d995;border-radius:10px;padding:11px;font-size:12px;line-height:1.5}
+.error{color:#ff9ba5;font-size:12px;line-height:1.5;white-space:pre-wrap}.success{color:#75efc4;font-size:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:12px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}#chart{height:470px}main{padding:20px}}
 </style>
 </head>
 <body>
-<header>
-  <div class="row">
-    <div>
-      <h1>EUR/USD Scanner</h1>
-      <div class="muted">Market analysis dashboard · Alert only</div>
-    </div>
-    <span class="tag">M15 / H1</span>
-  </div>
-</header>
-
+<header><div class="top"><div><div class="brand">EUR/USD SCANNER</div><div class="sub">Alert-only market analysis · M15 entries / H1 context</div></div><div id="connection" class="status">NOT CONNECTED</div></div></header>
 <nav>
-  <button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
-  <button onclick="showPage('analysis',this)">Analysis</button>
-  <button onclick="showPage('alerts',this)">Alerts</button>
-  <button onclick="showPage('settings',this)">Settings</button>
+<button class="active" data-page="dashboard">Dashboard</button><button data-page="analysis">Analysis</button><button data-page="alerts">Alerts</button><button data-page="settings">Settings</button>
 </nav>
-
 <main>
-<section id="dashboard">
-  <div class="panel">
-    <div class="row">
-      <div>
-        <div class="muted">EUR/USD</div>
-        <div class="price" id="price">--</div>
-        <div class="muted" id="updated">Waiting for market data</div>
-      </div>
-      <button class="action primary" onclick="loadData()">Load market data</button>
-    </div>
-    <div id="status">Live data not connected yet.</div>
-  </div>
-
-  <div class="panel">
-    <div class="row">
-      <h2>Price chart</h2>
-      <select id="timeframe" onchange="loadData()">
-        <option value="15min">M15</option>
-        <option value="1h">H1</option>
-      </select>
-    </div>
-    <div id="chart"></div>
-    <div class="muted">Candles · Analysis overlays will appear here</div>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><span class="muted">Market structure</span><strong id="structure">Waiting</strong></div>
-    <div class="stat"><span class="muted">Consolidation</span><strong id="consolidation">Waiting</strong></div>
-    <div class="stat"><span class="muted">Direction estimate</span><strong id="direction">Waiting</strong></div>
-    <div class="stat"><span class="muted">Signal strength</span><strong id="strength">Waiting</strong></div>
-  </div>
+<section id="dashboard" class="page active">
+ <div class="panel">
+  <div class="row"><div><div class="label">EUR/USD · LIVE / LAST AVAILABLE</div><div id="price" class="big">—</div><div id="priceTime" class="small">Connect your API key to load data</div></div><div class="row"><select id="interval"><option value="15min">M15 entry</option><option value="1h">H1 view</option></select><button id="loadBtn" class="primary">Load market data</button></div></div>
+  <div id="message" class="small" style="margin-top:10px">No market data loaded yet.</div>
+  <div id="chart"></div>
+  <div class="chart-note">Shaded horizontal levels mark detected FVG boundaries and order-block zones. They are analysis aids, not trade instructions.</div>
+ </div>
+ <div class="stats">
+  <div class="stat"><div class="label">MARKET STRUCTURE</div><strong id="structure">—</strong></div>
+  <div class="stat"><div class="label">CONSOLIDATION</div><strong id="consolidation">—</strong></div>
+  <div class="stat"><div class="label">NEXT 1–3 CANDLES</div><strong id="direction">—</strong></div>
+  <div class="stat"><div class="label">SIGNAL STRENGTH</div><strong id="strength">—</strong></div>
+ </div>
+ <div class="panel" style="margin-top:12px"><div class="row"><h3 class="section-title">H1 context</h3><span id="h1Badge" class="pill">Not loaded</span></div><div id="h1Text" class="small">H1 context is checked when you load M15 data.</div></div>
 </section>
-
-<section id="analysis" class="hidden">
-  <div class="panel">
-    <h2>Market analysis</h2>
-    <div class="signal">Supply and demand zones: awaiting market data.</div>
-    <div class="signal">Fair Value Gaps: awaiting market data.</div>
-    <div class="signal">Order Blocks: awaiting market data.</div>
-    <div class="signal">H1 market context: awaiting market data.</div>
-  </div>
+<section id="analysis" class="page">
+ <div class="panel"><h3 class="section-title">Detected setups</h3><div id="analysisSummary" class="small">Load market data to run the scanner.</div></div>
+ <div class="panel"><h3 class="section-title">Fair Value Gaps (FVG)</h3><div id="fvgList" class="small">No scan yet.</div></div>
+ <div class="panel"><h3 class="section-title">Breakout order blocks</h3><div id="obList" class="small">No scan yet.</div></div>
+ <div class="panel"><h3 class="section-title">Consolidation</h3><div id="rangeList" class="small">No scan yet.</div></div>
 </section>
-
-<section id="alerts" class="hidden">
-  <div class="panel">
-    <h2>Scanner alerts</h2>
-    <div id="alertList" class="muted">No alerts yet.</div>
-  </div>
+<section id="alerts" class="page">
+ <div class="panel"><div class="row"><h3 class="section-title">Alerts</h3><button id="notifyBtn" class="secondary">Enable notifications</button></div><div id="alertsList" class="small">Alerts appear here when a new scan detects a strong setup. Notifications require browser permission and may not work when the app is closed.</div></div>
 </section>
-
-<section id="settings" class="hidden">
-  <div class="panel">
-    <h2>Scanner settings</h2>
-    <p class="muted">Instrument: EUR/USD only</p>
-    <p class="muted">Entry timeframe: M15</p>
-    <p class="muted">Context timeframe: H1</p>
-    <p class="muted">Prediction: next 1–3 candles</p>
-    <p class="muted">Trading execution: disabled</p>
-  </div>
+<section id="settings" class="page">
+ <div class="panel"><h3 class="section-title">Connect Twelve Data</h3>
+  <div class="notice">Your API key is saved only in this browser on this device. It is sent to Twelve Data directly when you request market data. Anyone with access to this browser or its stored data may be able to retrieve it. Do not use a key with valuable paid credits. You can remove it below.</div>
+  <label class="field"><span class="label">TWELVE DATA API KEY</span><input id="apiKey" type="password" placeholder="Paste your API key here" autocomplete="off"></label>
+  <div class="row"><button id="saveKey" class="primary">Save API key</button><button id="showKey" class="secondary">Show key</button><button id="removeKey" class="secondary">Remove key</button></div>
+  <div id="keyStatus" class="small" style="margin-top:10px">No API key saved.</div>
+ </div>
+ <div class="panel"><h3 class="section-title">Scanner rules</h3>
+  <div class="item"><div class="item-title">Market</div><div class="item-desc">EUR/USD only. The app does not place trades or connect to a broker.</div></div>
+  <div class="item"><div class="item-title">Entry and context</div><div class="item-desc">M15 is the entry view. H1 is fetched separately for broader context.</div></div>
+  <div class="item"><div class="item-title">Conservative signals</div><div class="item-desc">A directional estimate is shown only when several simple conditions align. This is not a validated trading strategy.</div></div>
+ </div>
 </section>
+<footer>Educational analysis only. Signals can be wrong. Verify levels and backtest before risking money.</footer>
 </main>
-
-<footer>EUR/USD Scanner · Analysis and alerts only · Not financial advice</footer>
-
 <script>
-let chart, candleSeries, currentData=[];
-
-function showPage(page,button){
-  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
-  document.getElementById(page).classList.remove('hidden');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  button.classList.add('active');
-  if(chart) chart.timeScale().fitContent();
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+let chart=null, candleSeries=null, currentCandles=[], lastResult=null, h1Candles=[];
+let alertHistory=[];
+function setMessage(msg, bad=false){$("message").textContent=msg;$("message").className=bad?"error":"small";}
+function setConnection(ok,txt){$("connection").textContent=txt;$("connection").className="status "+(ok?"ok":"bad");}
+function savedKey(){try{return localStorage.getItem("eurusd_scanner_twelve_data_key")||"";}catch(e){return "";}}
+function saveKey(){
+ const key=$("apiKey").value.trim();
+ if(!key){$("keyStatus").textContent="Paste your API key first.";return;}
+ try{localStorage.setItem("eurusd_scanner_twelve_data_key",key);$("keyStatus").textContent="API key saved in this browser.";setConnection(true,"KEY SAVED");}
+ catch(e){$("keyStatus").textContent="Could not save key in this browser.";}
 }
-
-function setupChart(){
-  const el=document.getElementById('chart');
-  chart=LightweightCharts.createChart(el,{
-    width:el.clientWidth,
-    height:330,
-    layout:{background:{color:'#121d30'},textColor:'#aab7cc'},
-    grid:{vertLines:{color:'#202d42'},horzLines:{color:'#202d42'}},
-    rightPriceScale:{borderColor:'#30405c'},
-    timeScale:{borderColor:'#30405c',timeVisible:true},
-    crosshair:{mode:0}
-  });
-  candleSeries=chart.addCandlestickSeries({
-    upColor:'#22c55e',downColor:'#ef4444',
-    borderVisible:false,
-    wickUpColor:'#22c55e',wickDownColor:'#ef4444'
-  });
-  window.addEventListener('resize',()=>{
-    chart.applyOptions({width:el.clientWidth});
-  });
+function removeKey(){try{localStorage.removeItem("eurusd_scanner_twelve_data_key");}catch(e){}$("apiKey").value="";$("keyStatus").textContent="API key removed.";setConnection(false,"NOT CONNECTED");}
+function initChart(){
+ if(!window.LightweightCharts){$("chart").innerHTML='<div class="error">Chart library did not load. Check your internet connection and refresh.</div>';return;}
+ chart=LightweightCharts.createChart($("chart"),{width:$("chart").clientWidth,height:$("chart").clientHeight,layout:{background:{color:"#111d2e"},textColor:"#b8c8dc"},grid:{vertLines:{color:"#1c2b40"},horzLines:{color:"#1c2b40"}},rightPriceScale:{borderColor:"#26374e"},timeScale:{borderColor:"#26374e",timeVisible:true,secondsVisible:false},crosshair:{mode:0}});
+ candleSeries=chart.addCandlestickSeries({upColor:"#31d49a",downColor:"#ff6f7d",borderUpColor:"#31d49a",borderDownColor:"#ff6f7d",wickUpColor:"#31d49a",wickDownColor:"#ff6f7d"});
+ if(window.ResizeObserver){new ResizeObserver(()=>{if(chart)chart.applyOptions({width:$("chart").clientWidth,height:$("chart").clientHeight});}).observe($("chart"));}
 }
-
-async function loadData(){
-  const status=document.getElementById('status');
-  status.textContent='Loading market data...';
-  try{
-    const interval=document.getElementById('timeframe').value;
-    const response=await fetch(
-      '/.netlify/functions/market-data?symbol=EUR%2FUSD&interval='+interval+'&outputsize=250'
-    );
-    const data=await response.json();
-    if(!response.ok) throw new Error(data.error||'Market data request failed');
-    if(!data.values||!data.values.length) throw new Error('No candle data received');
-
-    currentData=data.values.slice().reverse().map(c=>({
-      time:Math.floor(new Date(c.datetime.replace(' ','T')+'Z').getTime()/1000),
-      open:Number(c.open),high:Number(c.high),
-      low:Number(c.low),close:Number(c.close)
-    })).filter(c=>Number.isFinite(c.time)&&Number.isFinite(c.close));
-
-    candleSeries.setData(currentData);
-    chart.timeScale().fitContent();
-    const last=currentData[currentData.length-1];
-    document.getElementById('price').textContent=last.close.toFixed(5);
-    document.getElementById('updated').textContent='Latest candle: '+new Date(last.time*1000).toLocaleString();
-    status.textContent='Market data loaded successfully.';
-    status.className='good';
-    analyse();
-  }catch(error){
-    status.textContent='Could not load market data: '+error.message;
-    status.className='bad';
+function toUnix(s){
+ // Twelve Data timestamps are parsed as UTC to keep chart ordering stable.
+ const d=new Date(String(s).replace(" ","T")+"Z");return Math.floor(d.getTime()/1000);
+}
+function normalize(values){
+ return values.slice().reverse().map(v=>({time:toUnix(v.datetime),open:+v.open,high:+v.high,low:+v.low,close:+v.close})).filter(c=>Number.isFinite(c.time)&&[c.open,c.high,c.low,c.close].every(Number.isFinite));
+}
+async function fetchSeries(interval,size){
+ const key=savedKey();if(!key)throw new Error("No API key saved. Open Settings and paste your Twelve Data API key.");
+ const url=new URL("https://api.twelvedata.com/time_series");
+ url.search=new URLSearchParams({symbol:"EUR/USD",interval,outputsize:String(size),format:"JSON",apikey:key}).toString();
+ const res=await fetch(url.toString());const data=await res.json();
+ if(!res.ok||data.status==="error"||data.code||!Array.isArray(data.values))throw new Error(data.message||"Twelve Data did not return candle data.");
+ return normalize(data.values);
+}
+function average(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;}
+function detectConsolidation(c){
+ if(c.length<14)return {detected:false,reason:"Not enough candles"};
+ const w=c.slice(-12), total=Math.max(...w.map(x=>x.high))-Math.min(...w.map(x=>x.low));
+ const avgRange=average(w.map(x=>x.high-x.low));
+ const tight=avgRange>0&&total<=avgRange*5.5;
+ const hi=Math.max(...w.slice(0,-2).map(x=>x.high)),lo=Math.min(...w.slice(0,-2).map(x=>x.low));
+ let topReject=0,bottomReject=0;
+ w.forEach(x=>{if(x.high>=hi-(avgRange*.12)&&x.close<x.high-(x.high-x.low)*.35)topReject++;if(x.low<=lo+(avgRange*.12)&&x.close>x.low+(x.high-x.low)*.35)bottomReject++;});
+ const rejection=topReject>=2&&bottomReject>=2;
+ return {detected:tight||rejection,kind:tight&&rejection?"Tight range + repeated rejections":tight?"Tight range":"Repeated range rejections",high:Math.max(...w.map(x=>x.high)),low:Math.min(...w.map(x=>x.low)),reason:tight||rejection?"": "No qualifying range"};
+}
+function detectSetups(c){
+ const gaps=[],blocks=[];
+ for(let i=2;i<c.length;i++){
+  const prior=detectConsolidation(c.slice(0,i));
+  const a=c[i-2],b=c[i-1],d=c[i];
+  const bullBreak=prior.detected&&b.close>prior.high;
+  const bearBreak=prior.detected&&b.close<prior.low;
+  if(bullBreak&&d.low>a.high){gaps.push({type:"Bullish",low:a.high,high:d.low,index:i,filled:false});}
+  if(bearBreak&&d.high<a.low){gaps.push({type:"Bearish",low:d.high,high:a.low,index:i,filled:false});}
+  if(bullBreak||bearBreak){
+   for(let j=i-1;j>=Math.max(0,i-5);j--){
+    const x=c[j];
+    if((bullBreak&&x.close<x.open)||(bearBreak&&x.close>x.open)){
+     blocks.push({type:bullBreak?"Demand":"Supply",low:x.low,high:x.high,index:j,breakIndex:i});break;
+    }
+   }
   }
+ }
+ // Mark a gap filled if a later candle trades through its full range.
+ gaps.forEach(g=>{for(let j=g.index+1;j<c.length;j++){if(c[j].low<=g.low&&c[j].high>=g.high){g.filled=true;break;}}});
+ return {gaps:gaps.slice(-8),blocks:blocks.slice(-8)};
 }
-
-function analyse() {
-  if (!currentData || currentData.length < 20) {
-    alert("Load market data first.");
-    return;
-  }
-
-  if (!window.ScannerEngine) {
-    alert("Scanner engine not loaded. Check scanner.js.");
-    return;
-  }
-
-  const result = window.ScannerEngine.analyse(currentData);
-
-  console.log("Scanner analysis:", result);
-
-  document.getElementById("structure").textContent =
-    result.consolidation.detected ? "Consolidation detected" : "No consolidation";
-
-  document.getElementById("direction").textContent =
-    result.prediction.direction || "No clear direction";
-
-  document.getElementById("strength").textContent =
-    result.prediction.strength || "Low";
-
-  document.getElementById("consolidation").textContent =
-    result.consolidation.detected ? "Yes" : "No";
+function analyse(c){
+ const consolidation=detectConsolidation(c),setups=detectSetups(c),last=c[c.length-1],prev=c[c.length-2];
+ const up=last.close>prev.close&&last.close>last.open,down=last.close<prev.close&&last.close<last.open;
+ const activeBull=setups.gaps.some(g=>g.type==="Bullish"&&!g.filled),activeBear=setups.gaps.some(g=>g.type==="Bearish"&&!g.filled);
+ const demand=setups.blocks.some(b=>b.type==="Demand"),supply=setups.blocks.some(b=>b.type==="Supply");
+ let direction="No clear direction",strength="Low";
+ if(up&&activeBull&&demand&&!activeBear&&!supply){direction="Bullish";strength="Strong alignment";}
+ else if(down&&activeBear&&supply&&!activeBull&&!demand){direction="Bearish";strength="Strong alignment";}
+ const first=c.slice(-20,-10),second=c.slice(-10);
+ const structure=average(second.map(x=>x.close))>average(first.map(x=>x.close))?"Short-term upward":average(second.map(x=>x.close))<average(first.map(x=>x.close))?"Short-term downward":"Sideways / mixed";
+ return {consolidation,setups,direction,strength,structure};
 }
-  if(currentData.length<20)return;
-  const recent=currentData.slice(-20);
-  const highs=recent.map(c=>c.high);
-  const lows=recent.map(c=>c.low);
-  const range=Math.max(...highs)-Math.min(...lows);
-  const average=recent.reduce((s,c)=>s+(c.high-c.low),0)/recent.length;
-  const isRange=range<average*5;
-  const last=recent[recent.length-1];
-  const previous=recent[recent.length-2];
-  const up=last.close>previous.close;
-  document.getElementById('structure').textContent=up?'Bullish':'Bearish';
-  document.getElementById('structure').className=up?'good':'bad';
-  document.getElementById('consolidation').textContent=isRange?'Possible range':'No clear range';
-  document.getElementById('direction').textContent=up?'Upward bias':'Downward bias';
-  document.getElementById('strength').textContent='Preliminary';
-  document.getElementById('alertList').textContent=
-    'Basic price analysis updated. Advanced signal validation will be added next.';
+function clearLines(){if(!candleSeries)return; (window._scannerLines||[]).forEach(l=>{try{candleSeries.removePriceLine(l);}catch(e){}});window._scannerLines=[];}
+function drawZones(result){
+ clearLines();if(!candleSeries)return;
+ const add=(price,title,color,style)=>{const line=candleSeries.createPriceLine({price,title,color,lineWidth:1,lineStyle:style,axisLabelVisible:true});window._scannerLines.push(line);};
+ result.setups.gaps.forEach(g=>{const col=g.type==="Bullish"?"rgba(49,212,154,.8)":"rgba(255,111,125,.8)";add(g.low,g.type+" FVG "+(g.filled?"(filled)":"(open)"),col,2);add(g.high,g.type+" FVG boundary",col,2);});
+ result.setups.blocks.forEach(b=>{const col=b.type==="Demand"?"#70a7ff":"#f5c96a";add(b.low,b.type+" block",col,1);add(b.high,b.type+" block",col,1);});
+ if(result.consolidation.detected){add(result.consolidation.high,"Range high","#a6b8cf",3);add(result.consolidation.low,"Range low","#a6b8cf",3);}
 }
-
-setupChart();
+function listHtml(items,kind){
+ if(!items.length)return '<div class="small">No '+kind+' detected in the loaded candles.</div>';
+ return items.slice().reverse().map(x=>'<div class="item"><div class="row"><span class="item-title">'+x.type+(x.filled!==undefined?' FVG':' order block')+'</span><span class="pill '+(x.filled?'yellow':'green')+'">'+(x.filled?'Filled':'Active')+'</span></div><div class="item-desc">Zone: '+x.low.toFixed(5)+' – '+x.high.toFixed(5)+'</div></div>').join("");
+}
+function render(c,result){
+ currentCandles=c;lastResult=result;
+ if(candleSeries){candleSeries.setData(c);chart.timeScale().fitContent();drawZones(result);}
+ $("price").textContent=c[c.length-1].close.toFixed(5);
+ $("priceTime").textContent="Last candle: "+new Date(c[c.length-1].time*1000).toLocaleString();
+ $("structure").textContent=result.structure;
+ $("consolidation").textContent=result.consolidation.detected?result.consolidation.kind:"Not detected";
+ $("direction").textContent=result.direction;
+ $("strength").textContent=result.strength;
+ $("analysisSummary").textContent="Analysed "+c.length+" candles. "+result.setups.gaps.length+" FVG(s), "+result.setups.blocks.length+" breakout order block(s).";
+ $("fvgList").innerHTML=listHtml(result.setups.gaps,"FVG");
+ $("obList").innerHTML=listHtml(result.setups.blocks,"order block");
+ $("rangeList").textContent=result.consolidation.detected?result.consolidation.kind+" · Range "+result.consolidation.low.toFixed(5)+" to "+result.consolidation.high.toFixed(5):"No current consolidation detected.";
+ const newAlert=result.direction!=="No clear direction"?result.direction+" alignment on EUR/USD M15":null;
+ if(newAlert&&!alertHistory.includes(newAlert)){alertHistory.unshift(newAlert);alertHistory=alertHistory.slice(0,20);$("alertsList").innerHTML=alertHistory.map(a=>'<div class="item">'+a+'</div>').join("");if("Notification"in window&&Notification.permission==="granted")new Notification("EUR/USD Scanner",{body:newAlert});}
+}
+async function load(){
+ $("loadBtn").disabled=true;setMessage("Requesting EUR/USD candles…");
+ try{
+  const interval=$("interval").value;
+  const candles=await fetchSeries(interval,250);
+  if(candles.length<20)throw new Error("Not enough candles returned to analyse.");
+  if(interval==="15min"){
+   try{h1Candles=await fetchSeries("1h",120);const h1=analyse(h1Candles);$("h1Badge").textContent=h1.structure;$("h1Badge").className="pill";$("h1Text").textContent="H1 context: "+h1.structure+". H1 consolidation: "+(h1.consolidation.detected?h1.consolidation.kind:"not detected")+". This is context only, not an entry signal.";}
+   catch(e){$("h1Badge").textContent="Unavailable";$("h1Text").textContent="M15 loaded, but H1 context could not be fetched: "+e.message;}
+  }else{$("h1Badge").textContent="Viewing H1";$("h1Text").textContent="You are viewing the H1 candles directly.";}
+  const result=analyse(candles);render(candles,result);setConnection(true,"DATA CONNECTED");setMessage("Loaded "+candles.length+" EUR/USD candles. Data may be delayed depending on your Twelve Data plan.");
+ }catch(e){setMessage(e.message,true);if(!savedKey())setConnection(false,"API KEY NEEDED");}
+ finally{$("loadBtn").disabled=false;}
+}
+document.querySelectorAll("nav button").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b===btn));document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===btn.dataset.page));if(chart)setTimeout(()=>chart.applyOptions({width:$("chart").clientWidth,height:$("chart").clientHeight}),50);}));
+$("loadBtn").addEventListener("click",load);$("saveKey").addEventListener("click",saveKey);$("removeKey").addEventListener("click",removeKey);
+$("showKey").addEventListener("click",()=>{$("apiKey").type=$("apiKey").type==="password"?"text":"password";});
+$("notifyBtn").addEventListener("click",async()=>{if(!("Notification"in window)){$("alertsList").textContent="This browser does not support notifications.";return;}const p=await Notification.requestPermission();$("alertsList").textContent=p==="granted"?"Notifications enabled. Keep in mind browser notifications may not run while the app is closed.":"Notification permission was not granted.";});
+const k=savedKey();if(k){$("apiKey").value=k;$("keyStatus").textContent="An API key is saved in this browser.";setConnection(true,"KEY SAVED");}
+initChart();
+})();
 </script>
-<script src="scanner.js"></script>
 </body>
 </html>
