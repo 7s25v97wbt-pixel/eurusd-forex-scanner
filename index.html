@@ -183,7 +183,33 @@ async function loadData(){
   }
 }
 
-function analyse(){
+function analyse() {
+  if (!currentData || currentData.length < 20) {
+    alert("Load market data first.");
+    return;
+  }
+
+  if (!window.ScannerEngine) {
+    alert("Scanner engine not loaded. Check scanner.js.");
+    return;
+  }
+
+  const result = window.ScannerEngine.analyse(currentData);
+
+  console.log("Scanner analysis:", result);
+
+  document.getElementById("structure").textContent =
+    result.consolidation.detected ? "Consolidation detected" : "No consolidation";
+
+  document.getElementById("direction").textContent =
+    result.prediction.direction || "No clear direction";
+
+  document.getElementById("strength").textContent =
+    result.prediction.strength || "Low";
+
+  document.getElementById("consolidation").textContent =
+    result.consolidation.detected ? "Yes" : "No";
+}
   if(currentData.length<20)return;
   const recent=currentData.slice(-20);
   const highs=recent.map(c=>c.high);
